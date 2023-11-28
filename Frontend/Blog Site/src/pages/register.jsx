@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 
-const register = () => {
+const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -44,4 +44,4 @@ const register = () => {
   )
 }
 
-export default register
+export default Register
