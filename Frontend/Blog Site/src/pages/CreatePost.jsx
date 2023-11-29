@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import { useState } from "react";
 import ReactQuill from "react-quill";
 
@@ -24,7 +25,8 @@ const CreatePost = () => {
     const [summary,setSummary] = useState('');
     const [content,setContent] = useState('');
     const [file,setFile] = useState('');
-    function createNewPost(e){
+    const [redirect, setRedirect] = useState(false);
+    async function createNewPost(e){
         e.preventDefault();
         //makinf data set for the from to send 
         const data = new FormData();
@@ -34,12 +36,24 @@ const CreatePost = () => {
         data.set('file', file);
 
         //sending the data to the server 
-        fetch('http://localhost:4000/post',{
+        const responce = await fetch('http://localhost:4000/post',{
             method: 'POST',
             body: data, 
+            credentials: 'include',
         });
+
+        if(responce.ok){
+            setRedirect(true);
+        }
     }
     
+    if(redirect){
+        return <Navigate to={'/'} />;  //redirecting to the home page 
+        //after the post is created 
+        //so that the user can see the post 
+        //in the home page 
+    }
+
   return (
     <form className="createPost" onSubmit={createNewPost}>
         <input 
