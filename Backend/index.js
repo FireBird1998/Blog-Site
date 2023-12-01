@@ -106,7 +106,64 @@ app.get('/post', async(req, res) => {
         );
 });
 
-app.listen(4000)
+app.get('/post/:id', async(req, res) => {
+    const {id} = req.params;
+    res.json(
+        await post.findById(id).populate('author', ['username'])
+        );
+
+})
+
+app.put('/post', uploadMiddleWare.single('file'), async(req, res) => {
+    const {id} = req.params;
+    let newPath = null;
+
+    if(req.file){
+        const {originalname, path} = req.file;
+        const parts = originalname.split('.');
+        const ext = parts[parts.length - 1];   
+        newPath = `uploads/${Date.now()}.${ext}`; 
+        fs.renameSync(path, newPath);
+    }
+
+    const {token} = req.cookies;
+    jwt.verify(token, secret, {}, async(err,info) => {
+        if(err) return res.status(500).json({error: 'Failed to authenticate token.'});
+
+        const {id, title, summary, content} = req.body;
+        const postDoc = await post.findById(id);
+        if(JSON.stringify(postDoc.author) != JSON.stringify(info.id)){
+            return res.status(400).json('Unauthorized');
+        }
+        await postDoc.updateOne({
+            title,
+            summary,
+            content,
+            cover: newPath || postDoc.cover,
+        });
+
+        res.json({message: 'Post updated successfully'});
+    });
+});
+
+app.delete('/post/:id', async(req, res) => {
+    const {id} = req.params;
+    const {token} = req.cookies;
+    jwt.verify(token, secret, {}, async(err,info) => {
+        if(err) return res.status(500).json({error: 'Failed to authenticate token.'});
+
+        const postDoc = await post.findById(id);
+        if(JSON.stringify(postDoc.author) != JSON.stringify(info.id)){
+            return res.status(400).json('Unauthorized');
+        }
+        await postDoc.deleteOne();
+
+        res.json({message: 'Post deleted successfully'});
+    });
+
+})
+
+app.listen(4000, () => console.log('Server is running on port 4000'));
 
 // wwwdas5471
 // j7AOWbemXgK4tj0H
